@@ -4,6 +4,7 @@ export const LABOUR_RATE = 55; // per hour, NZD
 export const PARTS_TOOLS_FEE = 15; // NZD
 export const CONTROLLER_PRICE = 70; // NZD
 export const EDGE_TMR_LABOUR_BONUS = 0.5; // extra labour hours for TMR stick replacement on DualSense Edge
+export const EDGE_PADDLES_LABOUR_BONUS = 0.25; // extra labour hours for Back Paddles install on DualSense Edge
 export const TRADE_IN_DISCOUNT = 40; // NZD discount per controller traded in
 
 // Default fallback if API fails
@@ -209,7 +210,7 @@ export const SERVICES: ServiceDef[] = [
     key: 'paddles',
     label: 'Back Paddles',
     description: 'Choose from SPARK, RISE Plus MAX RMB, RISE4 Plus MAX RMB, RISE V4, or RISE4 V4',
-    labourHours: 1.0,
+    labourHours: 0.75,
     partsCostUsd: 0, // set by paddle selection
     partsLabel: '',
     requiresTmr: false,
@@ -237,9 +238,12 @@ export const SERVICES: ServiceDef[] = [
   },
 ];
 
-// DualSense Edge sticks take longer to install/calibrate — add the edge bonus for TMR labour
+// DualSense Edge takes longer to work on — add the edge bonus for affected services
 export function getServiceLabourHours(service: ServiceDef, isEdge: boolean): number {
-  return service.key === 'tmr' && isEdge ? service.labourHours + EDGE_TMR_LABOUR_BONUS : service.labourHours;
+  if (!isEdge) return service.labourHours;
+  if (service.key === 'tmr') return service.labourHours + EDGE_TMR_LABOUR_BONUS;
+  if (service.key === 'paddles') return service.labourHours + EDGE_PADDLES_LABOUR_BONUS;
+  return service.labourHours;
 }
 
 // ─── Package Definitions ──────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -441,7 +445,10 @@ export function calculatePackage(
 ): Quote {
   const lines: QuoteLine[] = [];
 
-  const hours = pkg.services.includes('tmr') && isEdge ? pkg.labourHours + EDGE_TMR_LABOUR_BONUS : pkg.labourHours;
+  const edgeBonus = isEdge
+    ? (pkg.services.includes('tmr') ? EDGE_TMR_LABOUR_BONUS : 0) + (pkg.services.includes('paddles') ? EDGE_PADDLES_LABOUR_BONUS : 0)
+    : 0;
+  const hours = pkg.labourHours + edgeBonus;
   const labour = hours * LABOUR_RATE;
   lines.push({ label: `Labour — ${hours}hr`, amount: labour });
 
