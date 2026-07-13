@@ -512,7 +512,7 @@ export default function Configurator() {
         <div className="lg:w-80 shrink-0">
           <div className="sticky top-4">
             <QuoteSummary
-              quote={activeQuote || { lines: [], subtotal: 0, edgeSurcharge: 0, total: 0 }}
+              quote={activeQuote || { lines: [], subtotal: 0, edgeSurcharge: 0, tradeInDiscount: 0, total: 0 }}
               title={quoteTitle}
               userProvidesController={userProvidesController}
               onSend={handleSendQuote}
