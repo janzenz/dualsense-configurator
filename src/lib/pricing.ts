@@ -2,7 +2,6 @@
 
 export const LABOUR_RATE = 55; // per hour, NZD
 export const PARTS_TOOLS_FEE = 15; // NZD
-export const EDGE_SURCHARGE = 27.50; // NZD
 export const CONTROLLER_PRICE = 70; // NZD
 export const EDGE_TMR_LABOUR_BONUS = 0.5; // extra labour hours for TMR stick replacement on DualSense Edge
 export const TRADE_IN_DISCOUNT = 40; // NZD discount per controller traded in
@@ -210,7 +209,7 @@ export const SERVICES: ServiceDef[] = [
     key: 'paddles',
     label: 'Back Paddles',
     description: 'Choose from SPARK, RISE Plus MAX RMB, RISE4 Plus MAX RMB, RISE V4, or RISE4 V4',
-    labourHours: 0.75,
+    labourHours: 1.0,
     partsCostUsd: 0, // set by paddle selection
     partsLabel: '',
     requiresTmr: false,
@@ -344,7 +343,6 @@ export interface QuoteLine {
 export interface Quote {
   lines: QuoteLine[];
   subtotal: number;
-  edgeSurcharge: number;
   tradeInDiscount: number;
   total: number;
 }
@@ -420,22 +418,17 @@ export function calculateIndividualServices(
   }
 
   if (lines.length === 0) {
-    return { lines, subtotal: 0, edgeSurcharge: 0, tradeInDiscount: 0, total: 0 };
+    return { lines, subtotal: 0, tradeInDiscount: 0, total: 0 };
   }
 
   const subtotal = lines.reduce((sum, l) => sum + l.amount, 0);
-  const edgeSurcharge = isEdge ? EDGE_SURCHARGE : 0;
-
-  if (isEdge) {
-    lines.push({ label: 'DualSense Edge handling surcharge', amount: EDGE_SURCHARGE });
-  }
 
   const tradeInDiscount = tradeInCount * TRADE_IN_DISCOUNT;
   if (tradeInDiscount > 0) {
     lines.push({ label: `Trade-in discount, avg (${tradeInCount} controller${tradeInCount === 1 ? '' : 's'})`, amount: -tradeInDiscount });
   }
 
-  return { lines, subtotal, edgeSurcharge, tradeInDiscount, total: subtotal + edgeSurcharge - tradeInDiscount };
+  return { lines, subtotal, tradeInDiscount, total: subtotal - tradeInDiscount };
 }
 
 export function calculatePackage(
@@ -477,16 +470,11 @@ export function calculatePackage(
   }
 
   const subtotal = lines.reduce((sum, l) => sum + l.amount, 0);
-  const edgeSurcharge = isEdge ? EDGE_SURCHARGE : 0;
-
-  if (isEdge) {
-    lines.push({ label: 'DualSense Edge handling surcharge', amount: EDGE_SURCHARGE });
-  }
 
   const tradeInDiscount = tradeInCount * TRADE_IN_DISCOUNT;
   if (tradeInDiscount > 0) {
     lines.push({ label: `Trade-in discount, avg (${tradeInCount} controller${tradeInCount === 1 ? '' : 's'})`, amount: -tradeInDiscount });
   }
 
-  return { lines, subtotal, edgeSurcharge, tradeInDiscount, total: subtotal + edgeSurcharge - tradeInDiscount };
+  return { lines, subtotal, tradeInDiscount, total: subtotal - tradeInDiscount };
 }

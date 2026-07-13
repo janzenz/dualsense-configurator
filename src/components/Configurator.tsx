@@ -196,7 +196,6 @@ export default function Configurator() {
           >
             <Gamepad2 size={16} />
             DualSense Edge
-            <span className="text-[10px] opacity-75 ml-1">+${27.50}</span>
           </button>
         </div>
       </div>
@@ -512,7 +511,7 @@ export default function Configurator() {
         <div className="lg:w-80 shrink-0">
           <div className="sticky top-4">
             <QuoteSummary
-              quote={activeQuote || { lines: [], subtotal: 0, edgeSurcharge: 0, tradeInDiscount: 0, total: 0 }}
+              quote={activeQuote || { lines: [], subtotal: 0, tradeInDiscount: 0, total: 0 }}
               title={quoteTitle}
               onSend={handleSendQuote}
             />
