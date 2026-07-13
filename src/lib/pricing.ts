@@ -31,14 +31,15 @@ export interface TmrTier {
   id: string;
   name: string;
   priceNzd: number;
+  goodFor: string;
 }
 
 export const TMR_TIERS: TmrTier[] = [
-  { id: 'alps', name: 'Original Non-TMR', priceNzd: 10 },
-  { id: 'ginfull', name: 'Ginfull TMR', priceNzd: 20 },
-  { id: 'ksilver', name: 'KSilver TMR', priceNzd: 25 },
-  { id: 'gulikit', name: 'Gulikit TMR', priceNzd: 30 },
-  { id: 'gulikit720', name: 'Gulikit 720° TMR', priceNzd: 40 },
+  { id: 'alps', name: 'Original Non-TMR', priceNzd: 10, goodFor: 'Budget like-for-like replacement — casual play, not drift-proof long term' },
+  { id: 'ginfull', name: 'Ginfull TMR', priceNzd: 20, goodFor: 'Entry-level drift-free upgrade — casual and everyday gaming' },
+  { id: 'ksilver', name: 'KSilver TMR', priceNzd: 25, goodFor: 'Balanced precision and reliability — best all-rounder for most players' },
+  { id: 'gulikit', name: 'Gulikit TMR', priceNzd: 30, goodFor: 'Higher-precision sensing — competitive shooters needing finer aim control' },
+  { id: 'gulikit720', name: 'Gulikit 720° TMR', priceNzd: 40, goodFor: 'Extended 720° range — flight/racing sims and games needing max stick range' },
 ];
 
 export const DEFAULT_TMR = TMR_TIERS[1]; // KSilver
