@@ -514,7 +514,6 @@ export default function Configurator() {
             <QuoteSummary
               quote={activeQuote || { lines: [], subtotal: 0, edgeSurcharge: 0, tradeInDiscount: 0, total: 0 }}
               title={quoteTitle}
-              userProvidesController={userProvidesController}
               onSend={handleSendQuote}
             />
           </div>
