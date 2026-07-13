@@ -210,7 +210,7 @@ export const SERVICES: ServiceDef[] = [
     key: 'paddles',
     label: 'Back Paddles',
     description: 'Choose from SPARK, RISE Plus MAX RMB, RISE4 Plus MAX RMB, RISE V4, or RISE4 V4',
-    labourHours: 0.75,
+    labourHours: 0.5,
     partsCostUsd: 0, // set by paddle selection
     partsLabel: '',
     requiresTmr: false,
