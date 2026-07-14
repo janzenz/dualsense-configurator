@@ -2,9 +2,9 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
-// Change this to match your repo name for GitHub Pages
-// e.g. "/repo-name/" for project pages, "/" for user/org pages
+// Served from a custom domain root (dualsense-configurator.jzarzoso.com), so base is "/"
+// If you ever drop the custom domain and go back to username.github.io/repo-name/, change this back
 export default defineConfig({
-  base: '/dualsense-configurator/',
+  base: '/',
   plugins: [react(), tailwindcss()],
 })
