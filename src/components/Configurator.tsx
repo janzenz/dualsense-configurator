@@ -219,7 +219,13 @@ export default function Configurator() {
         </p>
         <div className="flex gap-2">
           <button
-            onClick={() => setUserProvidesController(true)}
+            onClick={() => {
+              if (!userProvidesController) {
+                setControllerType('dualsense');
+                setControllerConfirmed(false);
+              }
+              setUserProvidesController(true);
+            }}
             className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${
               userProvidesController
                 ? 'bg-indigo-600 text-white border-indigo-600'
