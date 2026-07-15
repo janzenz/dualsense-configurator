@@ -4,7 +4,6 @@ export const LABOUR_RATE = 55; // per hour, NZD
 export const PARTS_TOOLS_FEE = 15; // NZD
 export const CONTROLLER_PRICE = 60; // NZD
 export const EDGE_TMR_LABOUR_BONUS = 0.5; // extra labour hours for TMR stick replacement on DualSense Edge
-export const EDGE_PADDLES_LABOUR_BONUS = 0.25; // extra labour hours for Back Paddles install on DualSense Edge
 export const TRADE_IN_DISCOUNT = 40; // NZD discount per controller traded in
 
 // Default fallback if API fails
@@ -364,7 +363,6 @@ export const SERVICES: ServiceDef[] = [
 export function getServiceLabourHours(service: ServiceDef, isEdge: boolean): number {
   if (!isEdge) return service.labourHours;
   if (service.key === 'tmr') return service.labourHours + EDGE_TMR_LABOUR_BONUS;
-  if (service.key === 'paddles') return service.labourHours + EDGE_PADDLES_LABOUR_BONUS;
   return service.labourHours;
 }
 
@@ -568,9 +566,7 @@ export function calculatePackage(
 ): Quote {
   const lines: QuoteLine[] = [];
 
-  const edgeBonus = isEdge
-    ? (pkg.services.includes('tmr') ? EDGE_TMR_LABOUR_BONUS : 0) + (pkg.services.includes('paddles') ? EDGE_PADDLES_LABOUR_BONUS : 0)
-    : 0;
+  const edgeBonus = isEdge && pkg.services.includes('tmr') ? EDGE_TMR_LABOUR_BONUS : 0;
   const hours = pkg.labourHours + edgeBonus;
   const labour = hours * LABOUR_RATE;
   lines.push({ label: `Labour — ${hours}hr`, amount: labour });
