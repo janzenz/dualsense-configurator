@@ -24,9 +24,10 @@ import {
   calculateIndividualServices,
   calculatePackage,
   getServiceLabourHours,
-  paddleFitsBoard,
-  paddleBdmRangeLabel,
-  anyPaddleFitsBoard,
+  fitsBoard,
+  anyFitsBoard,
+  resolvedLink,
+  shellPriceUsd,
   TRADE_IN_DISCOUNT,
   type ControllerType,
   type ServiceKey,
@@ -51,6 +52,7 @@ export default function Configurator() {
   const [rate, setRate] = useState(DEFAULT_EXCHANGE_RATE);
   const [controllerConnected, setControllerConnected] = useState(false);
   const [detectedBoard, setDetectedBoard] = useState<string | null>(null);
+  const [controllerConfirmed, setControllerConfirmed] = useState(false);
 
   // Fetch live exchange rate on mount
   useEffect(() => {
@@ -60,6 +62,7 @@ export default function Configurator() {
   const isEdge = controllerType === 'edge';
   const paddleOptions = PADDLE_OPTIONS.filter((p) => (isEdge ? p.edgeOnly : !p.edgeOnly));
   const activeBoard = isEdge ? null : detectedBoard;
+  const controllerReady = controllerConnected || controllerConfirmed;
 
   // Clear a paddle selection that's no longer valid after a controller type switch, or that
   // no longer fits the detected/selected board model
@@ -67,10 +70,25 @@ export default function Configurator() {
     setSelectedPaddle((prev) => {
       if (!prev) return prev;
       const paddle = paddleOptions.find((p) => p.id === prev);
-      if (!paddle || !paddleFitsBoard(paddle, activeBoard)) return null;
+      if (!paddle || !fitsBoard(paddle, activeBoard)) return null;
       return prev;
     });
   }, [isEdge, activeBoard]);
+
+  // Clear a clicky kit selection that no longer fits the detected/selected board model
+  useEffect(() => {
+    setSelectedClickyKit((prev) => {
+      if (!prev) return prev;
+      const kit = CLICKY_KIT_OPTIONS.find((k) => k.id === prev);
+      if (!kit || !fitsBoard(kit, activeBoard)) return null;
+      return prev;
+    });
+  }, [activeBoard]);
+
+  // Drop shell parts that no longer fit the detected/selected board model
+  useEffect(() => {
+    setSelectedShells((prev) => prev.filter((s) => fitsBoard(s, activeBoard)));
+  }, [activeBoard]);
 
   // We only stock DualSense controllers, so Edge customers must always supply their own
   useEffect(() => {
@@ -136,7 +154,7 @@ export default function Configurator() {
   const quoteTitle = tab === 'individual' ? 'Custom Build Quote' : 'Package Quote';
 
   const handleSendQuote = () => {
-    if (!activeQuote || activeQuote.lines.length === 0) return;
+    if (!controllerReady || !activeQuote || activeQuote.lines.length === 0) return;
 
     const parts = [];
     parts.push(`Controller: ${isEdge ? 'DualSense Edge' : 'DualSense'}`);
@@ -237,6 +255,7 @@ export default function Configurator() {
             setControllerType(type);
             setDetectedBoard(board);
             setControllerConnected(true);
+            setControllerConfirmed(true);
           }}
           onReset={() => {
             setControllerConnected(false);
@@ -253,7 +272,10 @@ export default function Configurator() {
           </p>
           <div className="flex gap-2">
             <button
-              onClick={() => setControllerType('dualsense')}
+              onClick={() => {
+                setControllerType('dualsense');
+                setControllerConfirmed(true);
+              }}
               className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border transition-all ${
                 !isEdge
                   ? 'bg-indigo-600 text-white border-indigo-600'
@@ -264,7 +286,10 @@ export default function Configurator() {
               DualSense
             </button>
             <button
-              onClick={() => setControllerType('edge')}
+              onClick={() => {
+                setControllerType('edge');
+                setControllerConfirmed(true);
+              }}
               className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border transition-all ${
                 isEdge
                   ? 'bg-indigo-600 text-white border-indigo-600'
@@ -286,7 +311,10 @@ export default function Configurator() {
                   <button
                     key={model}
                     type="button"
-                    onClick={() => setDetectedBoard(model)}
+                    onClick={() => {
+                      setDetectedBoard(model);
+                      setControllerConfirmed(true);
+                    }}
                     className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
                       detectedBoard === model
                         ? 'bg-indigo-600 text-white border-indigo-600'
@@ -304,8 +332,17 @@ export default function Configurator() {
 
       <TradeInField count={tradeInCount} onChange={setTradeInCount} />
 
+      {!controllerReady && (
+        <div className="bg-zinc-900 border border-amber-600/30 rounded-xl p-6 text-center mb-6">
+          <p className="text-sm text-amber-400 font-medium mb-1">Confirm your controller type first</p>
+          <p className="text-xs text-zinc-500">
+            Select DualSense or DualSense Edge above, or connect your controller, to see services and pricing.
+          </p>
+        </div>
+      )}
+
       {/* Tabs */}
-      <div className="flex gap-0 border-b border-zinc-800 mb-6">
+      <div className={`flex gap-0 border-b border-zinc-800 mb-6 ${!controllerReady ? 'opacity-40 pointer-events-none' : ''}`}>
         <button
           onClick={() => setTab('individual')}
           className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-all ${
@@ -330,7 +367,7 @@ export default function Configurator() {
         </button> */}
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-6">
+      <div className={`flex flex-col lg:flex-row gap-6 ${!controllerReady ? 'opacity-40 pointer-events-none' : ''}`}>
         {/* Main Content */}
         <div className="flex-1 min-w-0">
           {tab === 'individual' ? (
@@ -345,7 +382,7 @@ export default function Configurator() {
                       ? (selectedPaddle ? toNzd(PADDLE_OPTIONS.find((p) => p.id === selectedPaddle)!.priceUsd, rate) : 0)
                       : service.key === 'shell'
                       ? (selectedShells.length
-                          ? selectedShells.reduce((sum, s) => sum + toNzd(s.priceUsd, rate), 0)
+                          ? selectedShells.reduce((sum, s) => sum + toNzd(shellPriceUsd(s, isEdge), rate), 0)
                           : toNzd(service.partsCostUsd, rate))
                       : service.key === 'clicky'
                       ? (selectedClickyKit ? toNzd(CLICKY_KIT_OPTIONS.find((k) => k.id === selectedClickyKit)!.priceUsd, rate) : 0)
@@ -402,26 +439,23 @@ export default function Configurator() {
                           <p className="text-[11px] font-medium uppercase tracking-widest text-zinc-500 mb-3">
                             Back paddles
                           </p>
-                          {activeBoard && !anyPaddleFitsBoard(paddleOptions, activeBoard) ? (
+                          {activeBoard && !anyFitsBoard(paddleOptions, activeBoard) ? (
                             <p className="text-xs text-amber-400 leading-relaxed">
                               ⚠ No paddle kits fit {activeBoard} — contact us about options.
                             </p>
                           ) : (
                             <div className="flex gap-2 flex-wrap">
-                              {paddleOptions.map((paddle) => {
-                                const fits = paddleFitsBoard(paddle, activeBoard);
+                              {paddleOptions.filter((paddle) => fitsBoard(paddle, activeBoard)).map((paddle) => {
                                 const isSelected = selectedPaddle === paddle.id;
+                                const link = resolvedLink(paddle, activeBoard);
                                 return (
                                   <button
                                     key={paddle.id}
                                     onClick={() =>
-                                      fits && setSelectedPaddle((prev) => (prev === paddle.id ? null : paddle.id))
+                                      setSelectedPaddle((prev) => (prev === paddle.id ? null : paddle.id))
                                     }
-                                    disabled={!fits}
                                     className={`flex flex-col items-start px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
-                                      !fits
-                                        ? 'bg-zinc-900 text-zinc-600 border-zinc-800 opacity-50 cursor-not-allowed'
-                                        : isSelected
+                                      isSelected
                                         ? 'bg-indigo-600 text-white border-indigo-600'
                                         : 'bg-zinc-800 text-zinc-400 border-zinc-700 hover:border-zinc-600'
                                     }`}
@@ -431,9 +465,9 @@ export default function Configurator() {
                                       <span className={`ml-1 text-[10px] ${isSelected ? 'opacity-75' : 'opacity-60'}`}>
                                         ${toNzd(paddle.priceUsd, rate).toFixed(0)}
                                       </span>
-                                      {paddle.link && (
+                                      {link && (
                                         <a
-                                          href={paddle.link}
+                                          href={link}
                                           target="_blank"
                                           rel="noopener noreferrer"
                                           onClick={(e) => e.stopPropagation()}
@@ -447,11 +481,6 @@ export default function Configurator() {
                                     <span className={`text-[10px] font-normal ${isSelected ? 'opacity-75' : 'opacity-60'}`}>
                                       {paddle.description}
                                     </span>
-                                    {!fits && (
-                                      <span className="text-[10px] font-normal text-amber-500">
-                                        ⚠ needs {paddleBdmRangeLabel(paddle)}
-                                      </span>
-                                    )}
                                   </button>
                                 );
                               })}
@@ -475,7 +504,7 @@ export default function Configurator() {
                             onSelect={() => toggleService(service.key)}
                             isEdge={isEdge}
                         />
-                        <ShellSelector options={SHELL_OPTIONS} selected={selectedShells} onToggle={toggleShell} rate={rate} />
+                        <ShellSelector options={SHELL_OPTIONS} selected={selectedShells} onToggle={toggleShell} rate={rate} board={activeBoard} isEdge={isEdge} />
                       </>
                     )
                   }
@@ -498,43 +527,52 @@ export default function Configurator() {
                           <p className="text-[11px] font-medium uppercase tracking-widest text-zinc-500 mb-3">
                             Clicky kit
                           </p>
-                          <div className="flex gap-2 flex-wrap">
-                            {CLICKY_KIT_OPTIONS.map((kit) => (
-                              <button
-                                key={kit.id}
-                                onClick={() =>
-                                  setSelectedClickyKit((prev) => (prev === kit.id ? null : kit.id))
-                                }
-                                className={`flex flex-col items-start px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
-                                  selectedClickyKit === kit.id
-                                    ? 'bg-indigo-600 text-white border-indigo-600'
-                                    : 'bg-zinc-800 text-zinc-400 border-zinc-700 hover:border-zinc-600'
-                                }`}
-                              >
-                                <span className="flex items-center gap-1">
-                                  {kit.name}
-                                  <span className={`ml-1 text-[10px] ${selectedClickyKit === kit.id ? 'opacity-75' : 'opacity-60'}`}>
-                                    ${toNzd(kit.priceUsd, rate).toFixed(0)}
-                                  </span>
-                                  {kit.link && (
-                                    <a
-                                      href={kit.link}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      onClick={(e) => e.stopPropagation()}
-                                      className={`${selectedClickyKit === kit.id ? 'opacity-75 hover:opacity-100' : 'opacity-60 hover:opacity-100'}`}
-                                      title="View product page"
-                                    >
-                                      <ExternalLink size={10} />
-                                    </a>
-                                  )}
-                                </span>
-                                <span className={`text-[10px] font-normal ${selectedClickyKit === kit.id ? 'opacity-75' : 'opacity-60'}`}>
-                                  {kit.description} · {kit.maxBdm}
-                                </span>
-                              </button>
-                            ))}
-                          </div>
+                          {activeBoard && !anyFitsBoard(CLICKY_KIT_OPTIONS, activeBoard) ? (
+                            <p className="text-xs text-amber-400 leading-relaxed">
+                              ⚠ No clicky kits fit {activeBoard} — contact us about options.
+                            </p>
+                          ) : (
+                            <div className="flex gap-2 flex-wrap">
+                              {CLICKY_KIT_OPTIONS.filter((kit) => fitsBoard(kit, activeBoard)).map((kit) => {
+                                const isSelected = selectedClickyKit === kit.id;
+                                return (
+                                  <button
+                                    key={kit.id}
+                                    onClick={() =>
+                                      setSelectedClickyKit((prev) => (prev === kit.id ? null : kit.id))
+                                    }
+                                    className={`flex flex-col items-start px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                                      isSelected
+                                        ? 'bg-indigo-600 text-white border-indigo-600'
+                                        : 'bg-zinc-800 text-zinc-400 border-zinc-700 hover:border-zinc-600'
+                                    }`}
+                                  >
+                                    <span className="flex items-center gap-1">
+                                      {kit.name}
+                                      <span className={`ml-1 text-[10px] ${isSelected ? 'opacity-75' : 'opacity-60'}`}>
+                                        ${toNzd(kit.priceUsd, rate).toFixed(0)}
+                                      </span>
+                                      {kit.link && (
+                                        <a
+                                          href={kit.link}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          onClick={(e) => e.stopPropagation()}
+                                          className={`${isSelected ? 'opacity-75 hover:opacity-100' : 'opacity-60 hover:opacity-100'}`}
+                                          title="View product page"
+                                        >
+                                          <ExternalLink size={10} />
+                                        </a>
+                                      )}
+                                    </span>
+                                    <span className={`text-[10px] font-normal ${isSelected ? 'opacity-75' : 'opacity-60'}`}>
+                                      {kit.description} · {kit.maxBdm}
+                                    </span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
                         </div>
                       </>
                     )

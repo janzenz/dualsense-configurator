@@ -55,6 +55,9 @@ export interface PaddleOption {
   edgeOnly?: boolean;
   link?: string;
   supportedBdms?: string[];
+  // Same kit, same price, but a different underlying SKU/link for an older board range
+  // (e.g. the BDM-010/020 version of this remap kit).
+  linkByBdm?: { supportedBdms: string[]; link: string };
 }
 
 
@@ -66,7 +69,20 @@ export const PADDLE_OPTIONS: PaddleOption[] = [
     priceUsd: 49.99,
     maxBdm: 'BDM-060',
     link: 'https://www.extremerate.com/products/extremerate-spark-back-paddles-kit-with-oled-display-clicky-trigger-stops-ergonomic-grips-for-ps5-controller-bdm-030-040-050-060-rubberized-black',
-    supportedBdms: ['BDM-030', 'BDM-040', 'BDM-050', 'BDM-060'],
+    supportedBdms: ['BDM-010', 'BDM-020', 'BDM-030', 'BDM-040', 'BDM-050', 'BDM-060'],
+    linkByBdm: {
+      supportedBdms: ['BDM-010', 'BDM-020'],
+      link: 'https://www.extremerate.com/products/extremerate-spark-back-paddles-kit-with-oled-display-clicky-trigger-stops-ergonomic-grips-for-ps5-controller-bdm-010-020-rubberized-black',
+    },
+  },
+  {
+    id: 'rise2_legacy',
+    name: 'RISE Plus MAX',
+    description: '2 paddles · clicky triggers · BDM-010/020 only',
+    priceUsd: 45.99,
+    maxBdm: 'BDM-020',
+    link: 'https://extremerate.com/products/extremerate-rise-plus-max-back-paddles-kit-with-clicky-trigger-stops-rubberized-grip-for-ps5-controller-bdm-010-020-rubberized-black',
+    supportedBdms: ['BDM-010', 'BDM-020'],
   },
   {
     id: 'rise2',
@@ -76,6 +92,15 @@ export const PADDLE_OPTIONS: PaddleOption[] = [
     maxBdm: 'BDM-050',
     link: 'https://www.extremerate.com/products/extremerate-real-metal-buttons-rmb-version-rise-plus-max-back-paddles-kit-with-clicky-trigger-stops-rubberized-grip-for-ps5-controller-bdm-030-040-050-rubberized-black',
     supportedBdms: ['BDM-030', 'BDM-040', 'BDM-050'],
+  },
+  {
+    id: 'rise4_legacy',
+    name: 'RISE4 Plus MAX',
+    description: '4 paddles · clicky triggers · BDM-010/020 only',
+    priceUsd: 48.99,
+    maxBdm: 'BDM-020',
+    link: 'https://extremerate.com/products/extremerate-rise4-plus-max-back-paddles-kit-with-clicky-trigger-stops-rubberized-grip-for-ps5-controller-bdm-010-020-rubberized-black',
+    supportedBdms: ['BDM-010', 'BDM-020'],
   },
   {
     id: 'rise4',
@@ -93,7 +118,11 @@ export const PADDLE_OPTIONS: PaddleOption[] = [
     priceUsd: 25.99,
     maxBdm: 'BDM-060',
     link: 'https://www.extremerate.com/products/extremerate-remappable-rise-v4-remap-kit-for-ps5-controller-bdm-030-040-050-060-textured-black',
-    supportedBdms: ['BDM-030', 'BDM-040', 'BDM-050', 'BDM-060'],
+    supportedBdms: ['BDM-010', 'BDM-020', 'BDM-030', 'BDM-040', 'BDM-050', 'BDM-060'],
+    linkByBdm: {
+      supportedBdms: ['BDM-010', 'BDM-020'],
+      link: 'https://www.extremerate.com/collections/rise2-remap-kit-for-ps5-controller-bdm-010-bdm-020',
+    },
   },
   {
     id: 'rise4_v4',
@@ -102,7 +131,11 @@ export const PADDLE_OPTIONS: PaddleOption[] = [
     priceUsd: 27.99,
     maxBdm: 'BDM-060',
     link: 'https://www.extremerate.com/products/extremerate-remappable-rise4-v4-remap-kit-for-ps5-controller-bdm-030-040-050-060-textured-black',
-    supportedBdms: ['BDM-030', 'BDM-040', 'BDM-050', 'BDM-060'],
+    supportedBdms: ['BDM-010', 'BDM-020', 'BDM-030', 'BDM-040', 'BDM-050', 'BDM-060'],
+    linkByBdm: {
+      supportedBdms: ['BDM-010', 'BDM-020'],
+      link: 'https://www.extremerate.com/products/extremerate-remappable-rise4-remap-kit-for-ps5-controller-bdm-010-020-rubberized-cobalt-blue',
+    },
   },
   {
     id: 'beyond',
@@ -114,25 +147,41 @@ export const PADDLE_OPTIONS: PaddleOption[] = [
   },
 ];
 
+// ─── Board (BDM) Compatibility Helpers ───────────────────────────────────────────────────────────────────────────────────────
+// Shared by any option (paddles, clicky kits, shell parts) that lists which board revisions it fits.
+
+export interface BdmCompatible {
+  supportedBdms?: string[];
+}
+
 // Normalizes a detected board (e.g. "BDM-060M"/"BDM-060X") down to its base "BDM-0X0" form
 export function normalizeBdm(board: string): string {
   return board.match(/^BDM-\d{3}/)?.[0] ?? board;
 }
 
-export function paddleFitsBoard(paddle: PaddleOption, board: string | null): boolean {
-  if (!board || !paddle.supportedBdms) return true;
-  return paddle.supportedBdms.includes(normalizeBdm(board));
+export function fitsBoard(item: BdmCompatible, board: string | null): boolean {
+  if (!board || !item.supportedBdms) return true;
+  return item.supportedBdms.includes(normalizeBdm(board));
 }
 
-export function paddleBdmRangeLabel(paddle: PaddleOption): string {
-  const bdms = paddle.supportedBdms;
+export function bdmRangeLabel(item: BdmCompatible): string {
+  const bdms = item.supportedBdms;
   if (!bdms || bdms.length === 0) return '';
   if (bdms.length === 1) return bdms[0];
   return `${bdms[0]}–${bdms[bdms.length - 1].replace('BDM-', '')}`;
 }
 
-export function anyPaddleFitsBoard(paddles: PaddleOption[], board: string | null): boolean {
-  return paddles.some((p) => paddleFitsBoard(p, board));
+// Resolves the correct product link for a board when an option ships as a different SKU
+// (same price) for an older board range — e.g. RISE V4 Remap Kit's BDM-010/020 variant.
+export function resolvedLink(item: { link?: string; linkByBdm?: { supportedBdms: string[]; link: string } }, board: string | null): string | undefined {
+  if (board && item.linkByBdm?.supportedBdms.includes(normalizeBdm(board))) {
+    return item.linkByBdm.link;
+  }
+  return item.link;
+}
+
+export function anyFitsBoard(items: BdmCompatible[], board: string | null): boolean {
+  return items.some((item) => fitsBoard(item, board));
 }
 
 // ─── Shell Swap Options ──────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -143,6 +192,15 @@ export interface ShellOption {
   description: string;
   priceUsd: number;
   link?: string;
+  supportedBdms?: string[];
+  // Edge uses different (and differently priced) parts than standard DualSense; when set, these
+  // override priceUsd/link whenever the customer's controller type is Edge.
+  priceUsdEdge?: number;
+  linkEdge?: string;
+  // For a single option whose underlying SKU (and product link) differs by board range but is
+  // otherwise the same price — e.g. "Buttons" ships as one product for BDM-010/020 and a
+  // different one for BDM-030+. Only the link changes; supportedBdms should cover both ranges.
+  linkByBdm?: { supportedBdms: string[]; link: string };
 }
 
 
@@ -153,6 +211,9 @@ export const SHELL_OPTIONS: ShellOption[] = [
     description: 'Replace the front faceplate',
     priceUsd: 18.99,
     link: 'https://www.extremerate.com/products/chrome-silver-glossy-front-housing-shell-for-ps5-controller-diy-replacement-shell-for-ps5-controller-custom-cover-faceplate-for-ps5-controller-mpfd4002',
+    supportedBdms: ['BDM-010', 'BDM-020', 'BDM-030', 'BDM-040', 'BDM-050'],
+    priceUsdEdge: 21.99,
+    linkEdge: 'https://extremerate.com/products/extremerate-replacement-left-right-front-housing-shell-with-touchpad-compatible-with-ps5-edge-controller-dragon-scroll',
   },
   {
     id: 'touchpad',
@@ -160,6 +221,7 @@ export const SHELL_OPTIONS: ShellOption[] = [
     description: 'Replace the touchpad panel',
     priceUsd: 9.99,
     link: 'https://www.extremerate.com/products/midnight-blue-replacement-touchpad-for-ps5-controller-soft-touch-custom-part-touch-pad-with-tools-for-ps5-controller-controller-not-included-jpf4013',
+    supportedBdms: ['BDM-010', 'BDM-020', 'BDM-030', 'BDM-040', 'BDM-050', 'BDM-060'],
   },
   {
     id: 'back_shell',
@@ -167,6 +229,9 @@ export const SHELL_OPTIONS: ShellOption[] = [
     description: 'Replace the rear shell',
     priceUsd: 19.99,
     link: 'https://www.extremerate.com/products/extremerate-performance-grip-replacement-back-housing-bottom-shell-for-ps5-controller-bdm-010-020-030-040-050-060-rubberized-black',
+    supportedBdms: ['BDM-010', 'BDM-020', 'BDM-030', 'BDM-040', 'BDM-050', 'BDM-060'],
+    priceUsdEdge: 21.99,
+    linkEdge: 'https://extremerate.com/products/extremerate-replacement-back-housing-bottom-shell-compatible-with-ps5-edge-controller-cherry-blossoms-pink',
   },
   {
     id: 'buttons',
@@ -174,8 +239,26 @@ export const SHELL_OPTIONS: ShellOption[] = [
     description: 'Replace ABXY + D-pad buttons',
     priceUsd: 12.99,
     link: 'https://www.extremerate.com/products/chrome-black-replacement-full-set-face-buttons-compatible-with-ps5-controller-bdm-010-bdm-020-jpf2008g2',
+    supportedBdms: ['BDM-010', 'BDM-020', 'BDM-030', 'BDM-040', 'BDM-050', 'BDM-060'],
+    linkByBdm: {
+      supportedBdms: ['BDM-030', 'BDM-040', 'BDM-050', 'BDM-060'],
+      link: 'https://www.extremerate.com/products/chrome-black-replacement-full-set-face-buttons-compatible-with-ps5-controller-bdm-030-jpf2008g3',
+    },
+    priceUsdEdge: 15.99,
+    linkEdge: 'https://extremerate.com/products/extremerate-replacement-full-set-buttons-compatible-with-ps5-edge-controller-orange',
   },
 ];
+
+// Edge uses different parts (and prices) for shell/back-plate/buttons than standard DualSense
+export function shellPriceUsd(option: ShellOption, isEdge: boolean): number {
+  return isEdge && option.priceUsdEdge !== undefined ? option.priceUsdEdge : option.priceUsd;
+}
+
+// Edge override takes priority; otherwise fall back to the board-specific SKU link, then base link.
+export function shellLink(option: ShellOption, isEdge: boolean, board: string | null): string | undefined {
+  if (isEdge && option.linkEdge) return option.linkEdge;
+  return resolvedLink(option, board);
+}
 
 // ─── Clicky Kit Options ──────────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -186,9 +269,19 @@ export interface ClickyKitOption {
   priceUsd: number;
   maxBdm: string;
   link?: string;
+  supportedBdms?: string[];
 }
 
 export const CLICKY_KIT_OPTIONS: ClickyKitOption[] = [
+  {
+    id: 'face_legacy',
+    name: 'Face Buttons (Legacy)',
+    description: 'Hard silicone tactile D-pad & action buttons clicky kit',
+    priceUsd: 15.99,
+    maxBdm: 'BDM-010/020',
+    link: 'https://www.extremerate.com/products/extremerate-face-clicky-kit-for-ps5-controller-bdm-010-bdm-020-custom-hard-silicone-tactile-switch-dpad-action-buttons-for-ps5-controller',
+    supportedBdms: ['BDM-010', 'BDM-020'],
+  },
   {
     id: 'face',
     name: 'Face Buttons',
@@ -196,6 +289,7 @@ export const CLICKY_KIT_OPTIONS: ClickyKitOption[] = [
     priceUsd: 14.99,
     maxBdm: 'BDM-030/040/050/060',
     link: 'https://www.extremerate.com/products/extremerate-custom-tactile-dpad-action-buttons-face-clicky-kit-v3-for-ps5-controller-bdm-030-040-050-060',
+    supportedBdms: ['BDM-030', 'BDM-040', 'BDM-050', 'BDM-060'],
   },
   {
     id: 'whole',
@@ -204,6 +298,7 @@ export const CLICKY_KIT_OPTIONS: ClickyKitOption[] = [
     priceUsd: 19.99,
     maxBdm: 'BDM-040/050/060',
     link: 'https://www.extremerate.com/products/extremerate-whole-set-strong-version-clicky-kit-v2-for-ps5-controller-bdm-040-050-060-shoulder-face-buttons-micro-switch-l2r2-clicky-hair-trigger-kit-and-tactile-l1r1-face-buttons-mouse-click-for-ps5-controller',
+    supportedBdms: ['BDM-040', 'BDM-050', 'BDM-060'],
   },
 ];
 
@@ -432,8 +527,9 @@ export function calculateIndividualServices(
       lines.push({ label: `${paddleOption.name} kit (USD$${paddleOption.priceUsd})`, amount: price });
     } else if (svc === 'shell') {
       for (const shell of shellOptions) {
-        const price = toNzd(shell.priceUsd, rate);
-        lines.push({ label: `${shell.name} (USD$${shell.priceUsd})`, amount: price });
+        const shellUsd = shellPriceUsd(shell, isEdge);
+        const price = toNzd(shellUsd, rate);
+        lines.push({ label: `${shell.name} (USD$${shellUsd})`, amount: price });
       }
     } else if (svc === 'clicky' && clickyKit) {
       const price = toNzd(clickyKit.priceUsd, rate);
