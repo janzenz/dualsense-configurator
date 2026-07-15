@@ -260,6 +260,8 @@ export default function Configurator() {
           onReset={() => {
             setControllerConnected(false);
             setDetectedBoard(null);
+            setControllerType('dualsense');
+            setControllerConfirmed(false);
           }}
         />
       )}
