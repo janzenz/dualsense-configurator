@@ -6,6 +6,8 @@ import { ServiceCard } from './ServiceCard';
 import { PackageCard } from './PackageCard';
 import { QuoteSummary } from './QuoteSummary';
 import { TradeInField } from './TradeInField';
+import { ControllerDetect } from './ControllerDetect';
+import { BOARD_MODELS } from '../lib/controller';
 import {
   TMR_TIERS,
   DEFAULT_TMR,
@@ -22,6 +24,9 @@ import {
   calculateIndividualServices,
   calculatePackage,
   getServiceLabourHours,
+  paddleFitsBoard,
+  paddleBdmRangeLabel,
+  anyPaddleFitsBoard,
   TRADE_IN_DISCOUNT,
   type ControllerType,
   type ServiceKey,
@@ -44,6 +49,8 @@ export default function Configurator() {
   const [selectedPackage, setSelectedPackage] = useState<PackageKey | null>(null);
   const [tradeInCount, setTradeInCount] = useState(0);
   const [rate, setRate] = useState(DEFAULT_EXCHANGE_RATE);
+  const [controllerConnected, setControllerConnected] = useState(false);
+  const [detectedBoard, setDetectedBoard] = useState<string | null>(null);
 
   // Fetch live exchange rate on mount
   useEffect(() => {
@@ -52,16 +59,31 @@ export default function Configurator() {
 
   const isEdge = controllerType === 'edge';
   const paddleOptions = PADDLE_OPTIONS.filter((p) => (isEdge ? p.edgeOnly : !p.edgeOnly));
+  const activeBoard = isEdge ? null : detectedBoard;
 
-  // Clear a paddle selection that's no longer valid after a controller type switch
+  // Clear a paddle selection that's no longer valid after a controller type switch, or that
+  // no longer fits the detected/selected board model
   useEffect(() => {
-    setSelectedPaddle((prev) => (prev && !paddleOptions.some((p) => p.id === prev) ? null : prev));
-  }, [isEdge]);
+    setSelectedPaddle((prev) => {
+      if (!prev) return prev;
+      const paddle = paddleOptions.find((p) => p.id === prev);
+      if (!paddle || !paddleFitsBoard(paddle, activeBoard)) return null;
+      return prev;
+    });
+  }, [isEdge, activeBoard]);
 
   // We only stock DualSense controllers, so Edge customers must always supply their own
   useEffect(() => {
     if (isEdge) setUserProvidesController(true);
   }, [isEdge]);
+
+  // Detection only applies when the customer is supplying their own controller
+  useEffect(() => {
+    if (!userProvidesController) {
+      setControllerConnected(false);
+      setDetectedBoard(null);
+    }
+  }, [userProvidesController]);
 
   const toggleService = (key: ServiceKey) => {
     setSelectedServices((prev) => {
@@ -119,6 +141,9 @@ export default function Configurator() {
     const parts = [];
     parts.push(`Controller: ${isEdge ? 'DualSense Edge' : 'DualSense'}`);
     parts.push(`Controller supply: ${userProvidesController ? 'Customer provided' : `We supply ($${CONTROLLER_PRICE} NZD)`}`);
+    if (userProvidesController && detectedBoard && (controllerConnected || !isEdge)) {
+      parts.push(`Board model: ${detectedBoard} (${controllerConnected ? 'detected' : 'manual'})`);
+    }
     parts.push(`Mode: ${tab === 'individual' ? 'Custom Build' : 'Package'}`);
     parts.push(`Exchange rate: 1 USD = $${rate.toFixed(2)} NZD`);
     if (tmrTier) {
@@ -169,37 +194,6 @@ export default function Configurator() {
         </p>
       </div>
 
-      {/* Controller Type */}
-      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 mb-4">
-        <p className="text-[11px] font-medium uppercase tracking-widest text-zinc-500 mb-3 flex items-center gap-2">
-          <Monitor size={14} /> Controller type
-        </p>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setControllerType('dualsense')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border transition-all ${
-              !isEdge
-                ? 'bg-indigo-600 text-white border-indigo-600'
-                : 'bg-zinc-800 text-zinc-400 border-zinc-700 hover:border-zinc-600'
-            }`}
-          >
-            <Gamepad2 size={16} />
-            DualSense
-          </button>
-          <button
-            onClick={() => setControllerType('edge')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border transition-all ${
-              isEdge
-                ? 'bg-indigo-600 text-white border-indigo-600'
-                : 'bg-zinc-800 text-zinc-400 border-zinc-700 hover:border-zinc-600'
-            }`}
-          >
-            <Gamepad2 size={16} />
-            DualSense Edge
-          </button>
-        </div>
-      </div>
-
       {/* Controller Supply */}
       <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 mb-4">
         <p className="text-[11px] font-medium uppercase tracking-widest text-zinc-500 mb-3 flex items-center gap-2">
@@ -233,6 +227,80 @@ export default function Configurator() {
           </button>
         </div>
       </div>
+
+      {userProvidesController && (
+        <ControllerDetect
+          connected={controllerConnected}
+          board={detectedBoard}
+          controllerType={controllerType}
+          onDetected={(type, board) => {
+            setControllerType(type);
+            setDetectedBoard(board);
+            setControllerConnected(true);
+          }}
+          onReset={() => {
+            setControllerConnected(false);
+            setDetectedBoard(null);
+          }}
+        />
+      )}
+
+      {/* Controller Type */}
+      {!controllerConnected && (
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 mb-4">
+          <p className="text-[11px] font-medium uppercase tracking-widest text-zinc-500 mb-3 flex items-center gap-2">
+            <Monitor size={14} /> Controller type
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setControllerType('dualsense')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border transition-all ${
+                !isEdge
+                  ? 'bg-indigo-600 text-white border-indigo-600'
+                  : 'bg-zinc-800 text-zinc-400 border-zinc-700 hover:border-zinc-600'
+              }`}
+            >
+              <Gamepad2 size={16} />
+              DualSense
+            </button>
+            <button
+              onClick={() => setControllerType('edge')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border transition-all ${
+                isEdge
+                  ? 'bg-indigo-600 text-white border-indigo-600'
+                  : 'bg-zinc-800 text-zinc-400 border-zinc-700 hover:border-zinc-600'
+              }`}
+            >
+              <Gamepad2 size={16} />
+              DualSense Edge
+            </button>
+          </div>
+
+          {userProvidesController && !isEdge && (
+            <div className="mt-3">
+              <p className="text-[10px] text-zinc-600 mb-2">
+                Board model — not sure? Connect your controller above to auto-detect.
+              </p>
+              <div className="flex gap-2 flex-wrap">
+                {BOARD_MODELS.map((model) => (
+                  <button
+                    key={model}
+                    type="button"
+                    onClick={() => setDetectedBoard(model)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                      detectedBoard === model
+                        ? 'bg-indigo-600 text-white border-indigo-600'
+                        : 'bg-zinc-800 text-zinc-400 border-zinc-700 hover:border-zinc-600'
+                    }`}
+                  >
+                    {model}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       <TradeInField count={tradeInCount} onChange={setTradeInCount} />
 
@@ -334,43 +402,61 @@ export default function Configurator() {
                           <p className="text-[11px] font-medium uppercase tracking-widest text-zinc-500 mb-3">
                             Back paddles
                           </p>
-                          <div className="flex gap-2 flex-wrap">
-                            {paddleOptions.map((paddle) => (
-                              <button
-                                key={paddle.id}
-                                onClick={() =>
-                                  setSelectedPaddle((prev) => (prev === paddle.id ? null : paddle.id))
-                                }
-                                className={`flex flex-col items-start px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
-                                  selectedPaddle === paddle.id
-                                    ? 'bg-indigo-600 text-white border-indigo-600'
-                                    : 'bg-zinc-800 text-zinc-400 border-zinc-700 hover:border-zinc-600'
-                                }`}
-                              >
-                                <span className="flex items-center gap-1">
-                                  {paddle.name}
-                                  <span className={`ml-1 text-[10px] ${selectedPaddle === paddle.id ? 'opacity-75' : 'opacity-60'}`}>
-                                    ${toNzd(paddle.priceUsd, rate).toFixed(0)}
-                                  </span>
-                                  {paddle.link && (
-                                    <a
-                                      href={paddle.link}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      onClick={(e) => e.stopPropagation()}
-                                      className={`${selectedPaddle === paddle.id ? 'opacity-75 hover:opacity-100' : 'opacity-60 hover:opacity-100'}`}
-                                      title="View product page"
-                                    >
-                                      <ExternalLink size={10} />
-                                    </a>
-                                  )}
-                                </span>
-                                <span className={`text-[10px] font-normal ${selectedPaddle === paddle.id ? 'opacity-75' : 'opacity-60'}`}>
-                                  {paddle.description}
-                                </span>
-                              </button>
-                            ))}
-                          </div>
+                          {activeBoard && !anyPaddleFitsBoard(paddleOptions, activeBoard) ? (
+                            <p className="text-xs text-amber-400 leading-relaxed">
+                              ⚠ No paddle kits fit {activeBoard} — contact us about options.
+                            </p>
+                          ) : (
+                            <div className="flex gap-2 flex-wrap">
+                              {paddleOptions.map((paddle) => {
+                                const fits = paddleFitsBoard(paddle, activeBoard);
+                                const isSelected = selectedPaddle === paddle.id;
+                                return (
+                                  <button
+                                    key={paddle.id}
+                                    onClick={() =>
+                                      fits && setSelectedPaddle((prev) => (prev === paddle.id ? null : paddle.id))
+                                    }
+                                    disabled={!fits}
+                                    className={`flex flex-col items-start px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                                      !fits
+                                        ? 'bg-zinc-900 text-zinc-600 border-zinc-800 opacity-50 cursor-not-allowed'
+                                        : isSelected
+                                        ? 'bg-indigo-600 text-white border-indigo-600'
+                                        : 'bg-zinc-800 text-zinc-400 border-zinc-700 hover:border-zinc-600'
+                                    }`}
+                                  >
+                                    <span className="flex items-center gap-1">
+                                      {paddle.name}
+                                      <span className={`ml-1 text-[10px] ${isSelected ? 'opacity-75' : 'opacity-60'}`}>
+                                        ${toNzd(paddle.priceUsd, rate).toFixed(0)}
+                                      </span>
+                                      {paddle.link && (
+                                        <a
+                                          href={paddle.link}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          onClick={(e) => e.stopPropagation()}
+                                          className={`${isSelected ? 'opacity-75 hover:opacity-100' : 'opacity-60 hover:opacity-100'}`}
+                                          title="View product page"
+                                        >
+                                          <ExternalLink size={10} />
+                                        </a>
+                                      )}
+                                    </span>
+                                    <span className={`text-[10px] font-normal ${isSelected ? 'opacity-75' : 'opacity-60'}`}>
+                                      {paddle.description}
+                                    </span>
+                                    {!fits && (
+                                      <span className="text-[10px] font-normal text-amber-500">
+                                        ⚠ needs {paddleBdmRangeLabel(paddle)}
+                                      </span>
+                                    )}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
                         </div>
                       </>
                     )

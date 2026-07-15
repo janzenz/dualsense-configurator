@@ -54,6 +54,7 @@ export interface PaddleOption {
   maxBdm: string;
   edgeOnly?: boolean;
   link?: string;
+  supportedBdms?: string[];
 }
 
 
@@ -65,6 +66,7 @@ export const PADDLE_OPTIONS: PaddleOption[] = [
     priceUsd: 49.99,
     maxBdm: 'BDM-060',
     link: 'https://www.extremerate.com/products/extremerate-spark-back-paddles-kit-with-oled-display-clicky-trigger-stops-ergonomic-grips-for-ps5-controller-bdm-030-040-050-060-rubberized-black',
+    supportedBdms: ['BDM-030', 'BDM-040', 'BDM-050', 'BDM-060'],
   },
   {
     id: 'rise2',
@@ -73,6 +75,7 @@ export const PADDLE_OPTIONS: PaddleOption[] = [
     priceUsd: 52.99,
     maxBdm: 'BDM-050',
     link: 'https://www.extremerate.com/products/extremerate-real-metal-buttons-rmb-version-rise-plus-max-back-paddles-kit-with-clicky-trigger-stops-rubberized-grip-for-ps5-controller-bdm-030-040-050-rubberized-black',
+    supportedBdms: ['BDM-030', 'BDM-040', 'BDM-050'],
   },
   {
     id: 'rise4',
@@ -81,6 +84,7 @@ export const PADDLE_OPTIONS: PaddleOption[] = [
     priceUsd: 55.99,
     maxBdm: 'BDM-050',
     link: 'https://www.extremerate.com/products/extremerate-real-metal-buttons-rmb-version-rise4-plus-max-back-paddles-kit-with-clicky-trigger-stops-rubberized-grip-for-ps5-controller-bdm-030-040-050-rubberized-white-gray-silver',
+    supportedBdms: ['BDM-030', 'BDM-040', 'BDM-050'],
   },
   {
     id: 'rise_v4',
@@ -89,6 +93,7 @@ export const PADDLE_OPTIONS: PaddleOption[] = [
     priceUsd: 25.99,
     maxBdm: 'BDM-060',
     link: 'https://www.extremerate.com/products/extremerate-remappable-rise-v4-remap-kit-for-ps5-controller-bdm-030-040-050-060-textured-black',
+    supportedBdms: ['BDM-030', 'BDM-040', 'BDM-050', 'BDM-060'],
   },
   {
     id: 'rise4_v4',
@@ -97,6 +102,7 @@ export const PADDLE_OPTIONS: PaddleOption[] = [
     priceUsd: 27.99,
     maxBdm: 'BDM-060',
     link: 'https://www.extremerate.com/products/extremerate-remappable-rise4-v4-remap-kit-for-ps5-controller-bdm-030-040-050-060-textured-black',
+    supportedBdms: ['BDM-030', 'BDM-040', 'BDM-050', 'BDM-060'],
   },
   {
     id: 'beyond',
@@ -107,6 +113,27 @@ export const PADDLE_OPTIONS: PaddleOption[] = [
     edgeOnly: true,
   },
 ];
+
+// Normalizes a detected board (e.g. "BDM-060M"/"BDM-060X") down to its base "BDM-0X0" form
+export function normalizeBdm(board: string): string {
+  return board.match(/^BDM-\d{3}/)?.[0] ?? board;
+}
+
+export function paddleFitsBoard(paddle: PaddleOption, board: string | null): boolean {
+  if (!board || !paddle.supportedBdms) return true;
+  return paddle.supportedBdms.includes(normalizeBdm(board));
+}
+
+export function paddleBdmRangeLabel(paddle: PaddleOption): string {
+  const bdms = paddle.supportedBdms;
+  if (!bdms || bdms.length === 0) return '';
+  if (bdms.length === 1) return bdms[0];
+  return `${bdms[0]}–${bdms[bdms.length - 1].replace('BDM-', '')}`;
+}
+
+export function anyPaddleFitsBoard(paddles: PaddleOption[], board: string | null): boolean {
+  return paddles.some((p) => paddleFitsBoard(p, board));
+}
 
 // ─── Shell Swap Options ──────────────────────────────────────────────────────────────────────────────────────────────────────
 
