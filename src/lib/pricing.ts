@@ -1,7 +1,7 @@
 // ─── Constants ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
 export const LABOUR_RATE = 55; // per hour, NZD
-export const PARTS_TOOLS_FEE = 15; // NZD
+export const PARTS_TOOLS_FEE = 5; // NZD
 export const CONTROLLER_PRICE = 60; // NZD
 export const EDGE_TMR_LABOUR_BONUS = 0.5; // extra labour hours for TMR stick replacement on DualSense Edge
 export const TRADE_IN_DISCOUNT = 40; // NZD discount per controller traded in
