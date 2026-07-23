@@ -39,7 +39,7 @@ import {
 type TabKey = 'individual' | 'package';
 
 export default function Configurator() {
-  const [controllerType, setControllerType] = useState<ControllerType>('dualsense');
+  const [controllerType, setControllerType] = useState<ControllerType | null>(null);
   const [userProvidesController, setUserProvidesController] = useState(true);
   const [tab, setTab] = useState<TabKey>('individual');
   const [tmrTier, setTmrTier] = useState<TmrTier | null>(null);
@@ -102,6 +102,16 @@ export default function Configurator() {
       setDetectedBoard(null);
     }
   }, [userProvidesController]);
+
+  const handleSupplyChange = (providesOwn: boolean) => {
+    if (userProvidesController !== providesOwn) {
+      setControllerType(null);
+      setControllerConfirmed(false);
+      setControllerConnected(false);
+      setDetectedBoard(null);
+    }
+    setUserProvidesController(providesOwn);
+  };
 
   const toggleService = (key: ServiceKey) => {
     setSelectedServices((prev) => {
@@ -219,13 +229,7 @@ export default function Configurator() {
         </p>
         <div className="flex gap-2">
           <button
-            onClick={() => {
-              if (!userProvidesController) {
-                setControllerType('dualsense');
-                setControllerConfirmed(false);
-              }
-              setUserProvidesController(true);
-            }}
+            onClick={() => handleSupplyChange(true)}
             className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${
               userProvidesController
                 ? 'bg-indigo-600 text-white border-indigo-600'
@@ -235,7 +239,7 @@ export default function Configurator() {
             I'll bring my own
           </button>
           <button
-            onClick={() => !isEdge && setUserProvidesController(false)}
+            onClick={() => !isEdge && handleSupplyChange(false)}
             disabled={isEdge}
             title={isEdge ? "We don't stock DualSense Edge controllers" : undefined}
             className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${
@@ -266,7 +270,7 @@ export default function Configurator() {
           onReset={() => {
             setControllerConnected(false);
             setDetectedBoard(null);
-            setControllerType('dualsense');
+            setControllerType(null);
             setControllerConfirmed(false);
           }}
         />
@@ -285,7 +289,7 @@ export default function Configurator() {
                 setControllerConfirmed(true);
               }}
               className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border transition-all ${
-                !isEdge
+                controllerType === 'dualsense'
                   ? 'bg-indigo-600 text-white border-indigo-600'
                   : 'bg-zinc-800 text-zinc-400 border-zinc-700 hover:border-zinc-600'
               }`}

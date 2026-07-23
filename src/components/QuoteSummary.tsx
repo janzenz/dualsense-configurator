@@ -48,7 +48,7 @@ export function QuoteSummary({ quote, title, onSend }: Props) {
       </button>
 
       <p className="text-[10px] text-zinc-600 mt-3">
-        Customer supplies controller. Calibration included with TMR installs. ExtremeRate parts at retail USD ×1.76 NZD. $5 parts &amp; tools fee covers consumables. Trade-in discount ($40 NZD/controller average) applies to controllers other than the one being modded — final amount confirmed once controllers are checked for version, wear, and damage.
+        Customer supplies controller. Calibration included with TMR installs. ExtremeRate parts at retail USD ×1.76 NZD. $10 parts &amp; tools fee covers consumables. Trade-in discount ($40 NZD/controller average) applies to controllers other than the one being modded — final amount confirmed once controllers are checked for version, wear, and damage.
       </p>
     </div>
   );

@@ -6,7 +6,7 @@ import type { ControllerType } from '../lib/pricing';
 interface Props {
   connected: boolean;
   board: string | null;
-  controllerType: ControllerType;
+  controllerType: ControllerType | null;
   onDetected: (type: ControllerType, board: string) => void;
   onReset: () => void;
 }
