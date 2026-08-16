@@ -321,7 +321,7 @@ export const SERVICES: ServiceDef[] = [
     key: 'tmr',
     label: 'Stick Replacement',
     description: 'stick install (pair) · soldering required · calibration included',
-    labourHours: 1.0,
+    labourHours: 0.75,
     partsCostUsd: 0,
     partsLabel: '',
     requiresTmr: true,
