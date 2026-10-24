@@ -29,7 +29,7 @@ import {
   resolvedLink,
   shellPriceUsd,
   TRADE_IN_DISCOUNT,
-  STICK_REPAIR_FEE,
+  THUMBSTICKS_COST,
   type ControllerType,
   type ServiceKey,
   type PackageKey,
@@ -390,7 +390,7 @@ export default function Configurator() {
                 {SERVICES.map((service) => {
                   const partsCost =
                     service.key === 'tmr'
-                      ? (tmrTier ? tmrTier.priceNzd + STICK_REPAIR_FEE : 0)
+                      ? (tmrTier ? tmrTier.priceNzd + THUMBSTICKS_COST : 0)
                       : service.key === 'paddles'
                       ? (selectedPaddle ? toNzd(PADDLE_OPTIONS.find((p) => p.id === selectedPaddle)!.priceUsd, rate) : 0)
                       : service.key === 'shell'
