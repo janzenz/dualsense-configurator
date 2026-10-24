@@ -29,6 +29,7 @@ import {
   resolvedLink,
   shellPriceUsd,
   TRADE_IN_DISCOUNT,
+  THUMBSTICKS_COST,
   type ControllerType,
   type ServiceKey,
   type PackageKey,
@@ -389,7 +390,7 @@ export default function Configurator() {
                 {SERVICES.map((service) => {
                   const partsCost =
                     service.key === 'tmr'
-                      ? (tmrTier ? tmrTier.priceNzd : 0)
+                      ? (tmrTier ? tmrTier.priceNzd + THUMBSTICKS_COST : 0)
                       : service.key === 'paddles'
                       ? (selectedPaddle ? toNzd(PADDLE_OPTIONS.find((p) => p.id === selectedPaddle)!.priceUsd, rate) : 0)
                       : service.key === 'shell'
@@ -402,7 +403,7 @@ export default function Configurator() {
                   const total = getServiceLabourHours(service, isEdge) * 55 + partsCost;
                   const partsLabel =
                     service.key === 'tmr'
-                      ? (tmrTier ? `${tmrTier.name} sticks` : '')
+                      ? (tmrTier ? `${tmrTier.name} sticks + thumbsticks` : '')
                       : service.key === 'paddles'
                       ? (selectedPaddle ? `${PADDLE_OPTIONS.find((p) => p.id === selectedPaddle)!.name} kit` : '')
                       : service.key === 'shell'
