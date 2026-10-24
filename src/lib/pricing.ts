@@ -2,6 +2,7 @@
 
 export const LABOUR_RATE = 55; // per hour, NZD
 export const PARTS_TOOLS_FEE = 5; // NZD
+export const STICK_REPAIR_FEE = 2; // NZD
 export const CONTROLLER_PRICE = 60; // NZD
 export const EDGE_TMR_LABOUR_BONUS = 0.5; // extra labour hours for TMR stick replacement on DualSense Edge
 export const TRADE_IN_DISCOUNT = 40; // NZD discount per controller traded in
@@ -520,6 +521,7 @@ export function calculateIndividualServices(
 
     if (svc === 'tmr' && tmrTier) {
       lines.push({ label: `${tmrTier.name} sticks, pair`, amount: tmrTier.priceNzd });
+      lines.push({ label: 'Stick repair fee', amount: STICK_REPAIR_FEE });
     } else if (svc === 'paddles' && paddleOption) {
       const price = toNzd(paddleOption.priceUsd, rate);
       lines.push({ label: `${paddleOption.name} kit (USD$${paddleOption.priceUsd})`, amount: price });
@@ -577,6 +579,7 @@ export function calculatePackage(
     const def = SERVICES.find((s) => s.key === svc)!;
     if (svc === 'tmr') {
       lines.push({ label: `TMR ${tmrTier.name} sticks, pair`, amount: tmrTier.priceNzd });
+      lines.push({ label: 'Stick repair fee', amount: STICK_REPAIR_FEE });
     } else if (svc === 'paddles' && pkg.paddleId) {
       const paddle = PADDLE_OPTIONS.find((p) => p.id === pkg.paddleId)!;
       const price = toNzd(paddle.priceUsd, rate);
