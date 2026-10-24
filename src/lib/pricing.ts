@@ -521,7 +521,7 @@ export function calculateIndividualServices(
 
     if (svc === 'tmr' && tmrTier) {
       lines.push({ label: `${tmrTier.name} sticks, pair`, amount: tmrTier.priceNzd });
-      lines.push({ label: 'Stick repair fee', amount: STICK_REPAIR_FEE });
+      lines.push({ label: 'Thumbsticks', amount: STICK_REPAIR_FEE });
     } else if (svc === 'paddles' && paddleOption) {
       const price = toNzd(paddleOption.priceUsd, rate);
       lines.push({ label: `${paddleOption.name} kit (USD$${paddleOption.priceUsd})`, amount: price });
@@ -579,7 +579,7 @@ export function calculatePackage(
     const def = SERVICES.find((s) => s.key === svc)!;
     if (svc === 'tmr') {
       lines.push({ label: `TMR ${tmrTier.name} sticks, pair`, amount: tmrTier.priceNzd });
-      lines.push({ label: 'Stick repair fee', amount: STICK_REPAIR_FEE });
+      lines.push({ label: 'Thumbsticks', amount: STICK_REPAIR_FEE });
     } else if (svc === 'paddles' && pkg.paddleId) {
       const paddle = PADDLE_OPTIONS.find((p) => p.id === pkg.paddleId)!;
       const price = toNzd(paddle.priceUsd, rate);

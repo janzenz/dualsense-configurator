@@ -403,7 +403,7 @@ export default function Configurator() {
                   const total = getServiceLabourHours(service, isEdge) * 55 + partsCost;
                   const partsLabel =
                     service.key === 'tmr'
-                      ? (tmrTier ? `${tmrTier.name} sticks + repair fee` : '')
+                      ? (tmrTier ? `${tmrTier.name} sticks + thumbsticks` : '')
                       : service.key === 'paddles'
                       ? (selectedPaddle ? `${PADDLE_OPTIONS.find((p) => p.id === selectedPaddle)!.name} kit` : '')
                       : service.key === 'shell'
